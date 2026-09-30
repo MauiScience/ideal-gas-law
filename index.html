@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.4 Ideal Gas Law — Lava Lab Science</title>
+<style>
+  :root{
+    --teal:#2dd4bf; --teal-dim:#14b8a6;
+    --violet:#a78bfa; --violet-dim:#8b5cf6;
+    --amber:#fbbf24; --amber-dim:#f59e0b;
+    --bg:#0c0e14; --panel:#151824; --panel2:#1b1f2e; --panel3:#232739;
+    --text:#e7e9f0; --muted:#9aa1b4; --border:#2a3044;
+    --good:#34d399; --bad:#f87171;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(45,212,191,.10), transparent 60%),
+      radial-gradient(ellipse 900px 500px at 100% 0%, rgba(167,139,250,.10), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    min-height:100vh;
+    padding:14px;
+  }
+  .app{max-width:1180px;margin:0 auto;}
+  .wordmark{
+    font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.16em;
+    background:linear-gradient(90deg, var(--teal), var(--violet) 55%, var(--amber));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    margin:0 0 6px 4px;
+  }
+  header.tool-header{
+    background:linear-gradient(135deg, var(--panel), var(--panel2));
+    border:1px solid var(--border); border-radius:14px;
+    padding:16px 20px; margin-bottom:14px;
+  }
+  header.tool-header h1{margin:0 0 4px 0; font-size:clamp(19px,2.6vw,26px); font-weight:800; letter-spacing:.01em;}
+  header.tool-header h1 .num{
+    background:linear-gradient(90deg,var(--teal),var(--violet));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  header.tool-header p{margin:0; color:var(--muted); font-size:13.5px;}
+  .eqn-banner{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    margin-top:10px; padding:8px 12px; border-radius:10px;
+    background:rgba(45,212,191,.07); border:1px solid rgba(45,212,191,.25);
+    font-size:13px; color:var(--muted);
+  }
+  .eqn-banner b{color:var(--teal); font-size:15px; font-family:Georgia,serif; letter-spacing:.02em;}
+
+  nav.modes{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+  nav.modes button{
+    flex:1 1 140px; padding:10px 12px; border-radius:10px; border:1px solid var(--border);
+    background:var(--panel); color:var(--muted); font-size:14px; font-weight:700; cursor:pointer;
+    transition:.15s;
+  }
+  nav.modes button.active{
+    background:linear-gradient(135deg, rgba(45,212,191,.18), rgba(167,139,250,.14));
+    border-color:var(--teal); color:var(--text);
+  }
+  nav.modes button:hover{color:var(--text);}
+
+  .panel{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:14px;}
+  .subtabs{display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap;}
+  .subtabs button{
+    padding:7px 14px; border-radius:999px; border:1px solid var(--border); background:var(--panel2);
+    color:var(--muted); font-size:12.5px; font-weight:700; cursor:pointer;
+  }
+  .subtabs button.active{background:var(--violet); border-color:var(--violet); color:#0c0e14;}
+
+  .grid2{display:grid; grid-template-columns:1.05fr .95fr; gap:16px;}
+  @media (max-width:820px){ .grid2{grid-template-columns:1fr;} }
+
+  .controls{display:flex; flex-direction:column; gap:14px;}
+  .ctrl{background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:10px 12px;}
+  .ctrl label{display:flex; justify-content:space-between; font-size:12.5px; color:var(--muted); margin-bottom:6px; font-weight:600;}
+  .ctrl label span.val{color:var(--text); font-weight:800;}
+  input[type=range]{
+    width:100%; -webkit-appearance:none; height:6px; border-radius:4px; background:var(--panel3); outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:16px; height:16px; border-radius:50%;
+    background:var(--teal); cursor:pointer; border:2px solid #0c0e14;
+  }
+  input[type=range].v-slider::-webkit-slider-thumb{background:var(--violet);}
+  input[type=range].a-slider::-webkit-slider-thumb{background:var(--amber);}
+
+  .readout-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px;}
+  @media (max-width:560px){ .readout-grid{grid-template-columns:repeat(2,1fr);} }
+  .readout{background:var(--panel3); border:1px solid var(--border); border-radius:10px; padding:10px; text-align:center;}
+  .readout .lbl{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em;}
+  .readout .num{font-size:19px; font-weight:800; margin-top:2px;}
+  .readout.p .num{color:var(--amber);}
+  .readout.v .num{color:var(--violet);}
+  .readout.t .num{color:#60a5fa;}
+  .readout.n .num{color:var(--teal);}
+
+  canvas{display:block; width:100%; background:#080a10; border:1px solid var(--border); border-radius:10px;}
+  .box-wrap{position:relative;}
+  .identity{
+    margin-top:10px; text-align:center; font-size:13px; color:var(--muted);
+    padding:8px; border-radius:8px; background:var(--panel2); border:1px solid var(--border);
+  }
+  .identity b{color:var(--good);}
+
+  svg text{fill:var(--muted); font-size:10px;}
+  .curve{fill:none; stroke:var(--teal); stroke-width:2.5;}
+  .axis{stroke:var(--border); stroke-width:1;}
+  .grid-line{stroke:#20243380; stroke-width:1;}
+  .pt{fill:var(--amber); stroke:#0c0e14; stroke-width:2;}
+
+  .preset-row{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;}
+  .preset-row button{
+    padding:7px 12px; border-radius:8px; border:1px solid var(--border); background:var(--panel2);
+    color:var(--muted); font-size:12px; font-weight:700; cursor:pointer;
+  }
+  .preset-row button.active{background:var(--teal); border-color:var(--teal); color:#0c0e14;}
+
+  .relation-box{
+    margin-top:12px; padding:12px 14px; border-radius:10px; background:rgba(167,139,250,.08);
+    border:1px solid rgba(167,139,250,.3); font-size:13.5px; line-height:1.55;
+  }
+  .relation-box .tag{
+    display:inline-block; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.05em;
+    padding:2px 8px; border-radius:999px; margin-bottom:6px;
+  }
+  .tag.inverse{background:rgba(248,113,113,.18); color:#fca5a5;}
+  .tag.direct{background:rgba(52,211,153,.18); color:#6ee7b7;}
+
+  .gas-row{display:flex; align-items:center; gap:10px; padding:10px; border-radius:10px; background:var(--panel2); border:1px solid var(--border); margin-bottom:8px;}
+  .gas-swatch{width:14px; height:14px; border-radius:4px; flex:0 0 auto;}
+  .gas-row .ctrl{flex:1; background:transparent; border:none; padding:0;}
+  .bar-outer{height:34px; border-radius:8px; overflow:hidden; display:flex; border:1px solid var(--border); background:var(--panel3);}
+  .bar-seg{display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#0c0e14; transition:width .2s;}
+
+  h2.section-title{font-size:15px; margin:0 0 12px 0; color:var(--text); font-weight:800;}
+  h3.mini-title{font-size:13px; margin:0 0 8px 0; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.05em;}
+
+  /* Guided lab */
+  .step-nav{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
+  .step-dots{display:flex; gap:6px;}
+  .step-dots span{width:9px; height:9px; border-radius:50%; background:var(--panel3); border:1px solid var(--border);}
+  .step-dots span.done{background:var(--good); border-color:var(--good);}
+  .step-dots span.cur{background:var(--amber); border-color:var(--amber);}
+  .navbtn{padding:8px 16px; border-radius:8px; border:1px solid var(--border); background:var(--panel2); color:var(--text); font-weight:700; cursor:pointer; font-size:13px;}
+  .navbtn:disabled{opacity:.35; cursor:default;}
+  .navbtn.primary{background:linear-gradient(135deg,var(--teal),var(--violet)); border:none; color:#0c0e14;}
+  .predict-opts{display:flex; flex-direction:column; gap:8px; margin:12px 0;}
+  .opt-btn{
+    text-align:left; padding:11px 14px; border-radius:10px; border:1px solid var(--border);
+    background:var(--panel2); color:var(--text); cursor:pointer; font-size:13.5px;
+  }
+  .opt-btn:hover{border-color:var(--teal);}
+  .opt-btn.correct{background:rgba(52,211,153,.16); border-color:var(--good);}
+  .opt-btn.incorrect{background:rgba(248,113,113,.16); border-color:var(--bad);}
+  .opt-btn:disabled{cursor:default;}
+  .feedback-box{margin-top:10px; padding:12px 14px; border-radius:10px; font-size:13.5px; line-height:1.55;}
+  .feedback-box.correct{background:rgba(52,211,153,.1); border:1px solid rgba(52,211,153,.4);}
+  .feedback-box.incorrect{background:rgba(248,113,113,.1); border:1px solid rgba(248,113,113,.4);}
+
+  /* Quiz */
+  .tier-row{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+  .tier-btn{flex:1 1 140px; padding:12px; border-radius:10px; border:1px solid var(--border); background:var(--panel2); cursor:pointer; text-align:left;}
+  .tier-btn.active{border-color:var(--amber); background:rgba(251,191,36,.1);}
+  .tier-btn .t-name{font-weight:800; font-size:14px;}
+  .tier-btn .t-desc{font-size:11.5px; color:var(--muted); margin-top:2px;}
+  .qcounter{font-size:12px; color:var(--muted); margin-bottom:8px;}
+  .qtext{font-size:15px; font-weight:700; margin-bottom:14px; line-height:1.5;}
+  .score-summary{text-align:center; padding:30px 16px;}
+  .score-summary .big{font-size:42px; font-weight:900; background:linear-gradient(90deg,var(--teal),var(--violet)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+
+  footer{text-align:center; color:var(--muted); font-size:11px; padding:16px 0 6px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="wordmark">LAVA LAB SCIENCE</div>
+  <header class="tool-header">
+    <h1><span class="num">3.4</span> Ideal Gas Law</h1>
+    <p>How pressure, volume, temperature, and moles of gas relate to each other — and why.</p>
+    <div class="eqn-banner"><b>PV = nRT</b> <span>P = pressure (atm) · V = volume (L) · n = moles · R = 0.0821 L·atm/(mol·K) · T = temperature (K)</span></div>
+  </header>
+
+  <nav class="modes">
+    <button data-mode="explore" class="active">🔍 Explore</button>
+    <button data-mode="guided">🧪 Guided Lab</button>
+    <button data-mode="quiz">📝 Quiz</button>
+  </nav>
+
+  <!-- EXPLORE -->
+  <div id="mode-explore">
+    <div class="subtabs">
+      <button data-sub="box" class="active">Particle Box</button>
+      <button data-sub="graph">Graphs</button>
+      <button data-sub="mix">Mixtures &amp; Partial Pressure</button>
+    </div>
+
+    <!-- Particle box -->
+    <div id="sub-box" class="panel">
+      <h2 class="section-title">Particle Box — direct manipulation of P, V, T, n</h2>
+      <div class="grid2">
+        <div>
+          <div class="box-wrap"><canvas id="pbCanvas" width="440" height="330"></canvas></div>
+          <div class="identity" id="pbIdentity"></div>
+        </div>
+        <div class="controls">
+          <div class="ctrl">
+            <label>Moles of gas, n <span class="val" id="pbN_val"></span></label>
+            <input type="range" id="pbN" min="0.2" max="5" step="0.1" value="1.5">
+          </div>
+          <div class="ctrl">
+            <label>Volume, V <span class="val" id="pbV_val"></span></label>
+            <input type="range" class="v-slider" id="pbV" min="2" max="40" step="1" value="15">
+          </div>
+          <div class="ctrl">
+            <label>Temperature, T <span class="val" id="pbT_val"></span></label>
+            <input type="range" class="a-slider" id="pbT" min="100" max="600" step="10" value="298">
+          </div>
+          <div class="readout-grid">
+            <div class="readout p"><div class="lbl">Pressure</div><div class="num" id="pbP_out">—</div></div>
+            <div class="readout v"><div class="lbl">Volume</div><div class="num" id="pbV_out">—</div></div>
+            <div class="readout t"><div class="lbl">Temp</div><div class="num" id="pbT_out">—</div></div>
+            <div class="readout n"><div class="lbl">Moles</div><div class="num" id="pbN_out">—</div></div>
+          </div>
+          <p style="font-size:12px;color:var(--muted);line-height:1.5;margin-top:4px;">Particle count and speed are scaled for visibility, not drawn to true molecular scale. Pressure is calculated directly from PV = nRT — it is <em>not</em> measured from collisions. Faster particles and more frequent wall collisions are what pressure looks like at the particle level.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Graphs -->
+    <div id="sub-graph" class="panel" style="display:none;">
+      <h2 class="section-title">Graphing the relationships in PV = nRT</h2>
+      <div class="preset-row" id="graphPresetRow"></div>
+      <div class="grid2">
+        <div>
+          <svg id="graphSvg" viewBox="0 0 440 320" style="width:100%; background:#080a10; border:1px solid var(--border); border-radius:10px;"></svg>
+        </div>
+        <div class="controls">
+          <div id="graphFixedControls"></div>
+          <div class="ctrl">
+            <label id="graphXLabel"></label>
+            <input type="range" class="a-slider" id="graphX">
+          </div>
+          <div class="readout-grid" style="grid-template-columns:1fr 1fr;">
+            <div class="readout" id="graphXReadout"><div class="lbl">X</div><div class="num">—</div></div>
+            <div class="readout" id="graphYReadout"><div class="lbl">Y</div><div class="num">—</div></div>
+          </div>
+          <div class="relation-box" id="graphRelationBox"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mixtures -->
+    <div id="sub-mix" class="panel" style="display:none;">
+      <h2 class="section-title">Gas Mixtures — Dalton's Law of Partial Pressures</h2>
+      <div class="grid2">
+        <div>
+          <canvas id="mixCanvas" width="440" height="230"></canvas>
+          <div style="margin-top:10px;">
+            <div class="ctrl">
+              <label>Container volume, V <span class="val" id="mixV_val"></span></label>
+              <input type="range" class="v-slider" id="mixV" min="2" max="30" step="1" value="10">
+            </div>
+            <div class="ctrl">
+              <label>Temperature, T <span class="val" id="mixT_val"></span></label>
+              <input type="range" class="a-slider" id="mixT" min="150" max="500" step="10" value="300">
+            </div>
+          </div>
+        </div>
+        <div>
+          <div id="mixGasRows"></div>
+          <h3 class="mini-title" style="margin-top:14px;">Partial pressures (stacked to total)</h3>
+          <div class="bar-outer" id="mixBar"></div>
+          <div class="identity" id="mixIdentity" style="margin-top:10px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GUIDED LAB -->
+  <div id="mode-guided" class="panel" style="display:none;">
+    <div class="step-nav">
+      <h2 class="section-title" style="margin:0;" id="stepTitle"></h2>
+      <div class="step-dots" id="stepDots"></div>
+    </div>
+    <div id="stepBody"></div>
+    <div class="step-nav" style="margin-top:16px;">
+      <button class="navbtn" id="stepBack">← Back</button>
+      <span style="font-size:12px;color:var(--muted);" id="stepScore"></span>
+      <button class="navbtn primary" id="stepNext">Next →</button>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="mode-quiz" class="panel" style="display:none;">
+    <div id="quizTierSelect">
+      <h2 class="section-title">Choose a tier</h2>
+      <div class="tier-row" id="tierRow"></div>
+    </div>
+    <div id="quizArea" style="display:none;"></div>
+  </div>
+
+  <footer>Lava Lab Science · AP Chemistry CED Topic 3.4 · Explore → Guided Lab → Quiz · works fully offline</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const R = 0.082057; // L*atm / (mol*K)
+
+function fmt(x, d){ if(x===undefined||x===null||isNaN(x)) return "—"; return (+x).toFixed(d===undefined?2:d); }
+
+/* ---------------- MODE / SUBTAB SWITCHING ---------------- */
+const modeButtons = document.querySelectorAll('nav.modes button');
+const modePanels = { explore: document.getElementById('mode-explore'), guided: document.getElementById('mode-guided'), quiz: document.getElementById('mode-quiz') };
+modeButtons.forEach(b=>b.addEventListener('click', ()=>{
+  modeButtons.forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  Object.keys(modePanels).forEach(k=> modePanels[k].style.display = (k===b.dataset.mode)?'':'none');
+}));
+
+const subButtons = document.querySelectorAll('.subtabs button');
+const subPanels = { box: document.getElementById('sub-box'), graph: document.getElementById('sub-graph'), mix: document.getElementById('sub-mix') };
+subButtons.forEach(b=>b.addEventListener('click', ()=>{
+  subButtons.forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  Object.keys(subPanels).forEach(k=> subPanels[k].style.display = (k===b.dataset.sub)?'':'none');
+}));
+
+/* ================= PARTICLE BOX ================= */
+(function(){
+  const canvas = document.getElementById('pbCanvas');
+  const ctx = canvas.getContext('2d');
+  const nSlider = document.getElementById('pbN'), vSlider = document.getElementById('pbV'), tSlider = document.getElementById('pbT');
+  const nVal = document.getElementById('pbN_val'), vVal = document.getElementById('pbV_val'), tVal = document.getElementById('pbT_val');
+  const pOut = document.getElementById('pbP_out'), vOut = document.getElementById('pbV_out'), tOut = document.getElementById('pbT_out'), nOut = document.getElementById('pbN_out');
+  const identityEl = document.getElementById('pbIdentity');
+
+  let particles = [];
+  const CX = 220, CY = 165;
+  function boxSide(V){
+    const Vmin=2, Vmax=40;
+    const frac = (V-Vmin)/(Vmax-Vmin);
+    return 90 + frac*220;
+  }
+  function targetCount(n){ return Math.max(6, Math.min(90, Math.round(n*18))); }
+  function speedScale(T){ return Math.sqrt(T/298)*1.6; }
+
+  function rebuildParticles(){
+    const n = +nSlider.value, T = +tSlider.value;
+    const side = boxSide(+vSlider.value);
+    const half = side/2;
+    const count = targetCount(n);
+    particles = [];
+    for(let i=0;i<count;i++){
+      const ang = Math.random()*Math.PI*2;
+      const spd = speedScale(T)*(0.6+Math.random()*0.8);
+      particles.push({
+        x: CX + (Math.random()*2-1)*(half-8),
+        y: CY + (Math.random()*2-1)*(half-8),
+        vx: Math.cos(ang)*spd,
+        vy: Math.sin(ang)*spd,
+        r: 3.4
+      });
+    }
+  }
+
+  function resyncOnVChange(){
+    const side = boxSide(+vSlider.value);
+    const half = side/2;
+    particles.forEach(p=>{
+      p.x = Math.max(CX-half+p.r+2, Math.min(CX+half-p.r-2, p.x));
+      p.y = Math.max(CY-half+p.r+2, Math.min(CY+half-p.r-2, p.y));
+    });
+  }
+
+  function resyncOnTChange(prevT, newT){
+    const scale = Math.sqrt(newT/prevT);
+    particles.forEach(p=>{ p.vx*=scale; p.vy*=scale; });
+  }
+
+  function resyncOnNChange(){
+    const n = +nSlider.value, T = +tSlider.value;
+    const target = targetCount(n);
+    const side = boxSide(+vSlider.value); const half = side/2;
+    while(particles.length < target){
+      const ang = Math.random()*Math.PI*2;
+      const spd = speedScale(T)*(0.6+Math.random()*0.8);
+      particles.push({ x: CX+(Math.random()*2-1)*(half-8), y: CY+(Math.random()*2-1)*(half-8), vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd, r:3.4 });
+    }
+    while(particles.length > target) particles.pop();
+  }
+
+  function step(){
+    const side = boxSide(+vSlider.value);
+    const half = side/2;
+    const left=CX-half, right=CX+half, top=CY-half, bottom=CY+half;
+    particles.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x-p.r<left){p.x=left+p.r; p.vx*=-1;}
+      if(p.x+p.r>right){p.x=right-p.r; p.vx*=-1;}
+      if(p.y-p.r<top){p.y=top+p.r; p.vy*=-1;}
+      if(p.y+p.r>bottom){p.y=bottom-p.r; p.vy*=-1;}
+    });
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const side = boxSide(+vSlider.value); const half=side/2;
+    ctx.strokeStyle = '#2dd4bf'; ctx.lineWidth=2;
+    ctx.strokeRect(CX-half, CY-half, side, side);
+    ctx.fillStyle = 'rgba(45,212,191,0.85)';
+    particles.forEach(p=>{
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+    });
+  }
+
+  function updateReadouts(){
+    const n=+nSlider.value, V=+vSlider.value, T=+tSlider.value;
+    const P = n*R*T/V;
+    nVal.textContent = n.toFixed(1)+' mol';
+    vVal.textContent = V+' L';
+    tVal.textContent = T+' K';
+    pOut.textContent = fmt(P,2)+' atm';
+    vOut.textContent = V+' L';
+    tOut.textContent = T+' K';
+    nOut.textContent = n.toFixed(1)+' mol';
+    identityEl.innerHTML = 'PV = '+fmt(P*V,2)+'  &nbsp;|&nbsp;  nRT = '+fmt(n*R*T,2)+'  &nbsp;→&nbsp;  <b>PV = nRT confirmed</b>';
+  }
+
+  let prevT = +tSlider.value;
+  nSlider.addEventListener('input', ()=>{ resyncOnNChange(); updateReadouts(); });
+  vSlider.addEventListener('input', ()=>{ resyncOnVChange(); updateReadouts(); });
+  tSlider.addEventListener('input', ()=>{ const newT=+tSlider.value; resyncOnTChange(prevT,newT); prevT=newT; updateReadouts(); });
+
+  rebuildParticles(); updateReadouts();
+  function loop(){ step(); draw(); requestAnimationFrame(loop); }
+  loop();
+})();
+
+/* ================= GRAPHS ================= */
+(function(){
+  const presets = [
+    { id:'pv', xVar:'V', yVar:'P', xLabel:'Volume, V (L)', yLabel:'Pressure, P (atm)',
+      xMin:1, xMax:25, xDefault:8,
+      fixed:[ {key:'n', label:'moles, n', min:0.5, max:4, step:0.1, def:1.5, unit:'mol'}, {key:'T', label:'temperature, T', min:200, max:500, step:10, def:298, unit:'K'} ],
+      compute:(f,x)=> f.n*R*f.T/x, relation:'inverse', law:"Boyle's Law",
+      text:(f)=>"At constant n and T, pressure and volume are <b>inversely proportional</b>: as V increases, P decreases, and P × V stays constant (= nRT). Compressing a gas into a smaller volume forces the same number of particles to collide with the walls more often, raising pressure."
+    },
+    { id:'vt', xVar:'T', yVar:'V', xLabel:'Temperature, T (K)', yLabel:'Volume, V (L)',
+      xMin:150, xMax:500, xDefault:298,
+      fixed:[ {key:'n', label:'moles, n', min:0.5, max:4, step:0.1, def:1.5, unit:'mol'}, {key:'P', label:'pressure, P', min:0.5, max:3, step:0.1, def:1, unit:'atm'} ],
+      compute:(f,x)=> f.n*R*x/f.P, relation:'direct', law:"Charles's Law",
+      text:(f)=>"At constant n and P, volume and Kelvin temperature are <b>directly proportional</b> — the line passes through the origin only because T is in Kelvin (V → 0 as T → 0 K). As particles gain kinetic energy, the gas must expand to keep pressure constant."
+    },
+    { id:'pt', xVar:'T', yVar:'P', xLabel:'Temperature, T (K)', yLabel:'Pressure, P (atm)',
+      xMin:150, xMax:500, xDefault:298,
+      fixed:[ {key:'n', label:'moles, n', min:0.5, max:4, step:0.1, def:1.5, unit:'mol'}, {key:'V', label:'volume, V', min:2, max:25, step:1, def:10, unit:'L'} ],
+      compute:(f,x)=> f.n*R*x/f.V, relation:'direct', law:"Gay-Lussac's Law",
+      text:(f)=>"At constant n and V, pressure and Kelvin temperature are <b>directly proportional</b>. Heating a rigid container speeds up the particles, so they hit the walls harder and more often, raising pressure — without the gas being able to expand."
+    },
+    { id:'pn', xVar:'n', yVar:'P', xLabel:'Moles, n (mol)', yLabel:'Pressure, P (atm)',
+      xMin:0.1, xMax:5, xDefault:1.5,
+      fixed:[ {key:'V', label:'volume, V', min:2, max:25, step:1, def:10, unit:'L'}, {key:'T', label:'temperature, T', min:200, max:500, step:10, def:298, unit:'K'} ],
+      compute:(f,x)=> x*R*f.T/f.V, relation:'direct', law:'P vs n',
+      text:(f)=>"At constant V and T, pressure and moles are <b>directly proportional</b>. Adding more gas particles to a fixed volume means more collisions with the walls per second, so pressure rises in direct proportion to n."
+    },
+    { id:'vn', xVar:'n', yVar:'V', xLabel:'Moles, n (mol)', yLabel:'Volume, V (L)',
+      xMin:0.1, xMax:5, xDefault:1.5,
+      fixed:[ {key:'P', label:'pressure, P', min:0.5, max:3, step:0.1, def:1, unit:'atm'}, {key:'T', label:'temperature, T', min:200, max:500, step:10, def:298, unit:'K'} ],
+      compute:(f,x)=> x*R*f.T/f.P, relation:'direct', law:'V vs n',
+      text:(f)=>"At constant P and T, volume and moles are <b>directly proportional</b>. Adding more particles at fixed pressure and temperature requires more space to keep the collision rate (and thus pressure) the same — this is the basis of Avogadro's Law."
+    }
+  ];
+  let current = presets[0];
+  let fixedVals = {};
+
+  const presetRow = document.getElementById('graphPresetRow');
+  presets.forEach(p=>{
+    const b = document.createElement('button');
+    b.textContent = p.law;
+    b.dataset.id = p.id;
+    if(p===current) b.classList.add('active');
+    b.addEventListener('click', ()=>{ selectPreset(p.id); });
+    presetRow.appendChild(b);
+  });
+
+  const fixedControlsEl = document.getElementById('graphFixedControls');
+  const xLabelEl = document.getElementById('graphXLabel');
+  const xSlider = document.getElementById('graphX');
+  const xReadout = document.getElementById('graphXReadout');
+  const yReadout = document.getElementById('graphYReadout');
+  const relationBox = document.getElementById('graphRelationBox');
+  const svg = document.getElementById('graphSvg');
+
+  function selectPreset(id){
+    current = presets.find(p=>p.id===id);
+    fixedVals = {};
+    current.fixed.forEach(f=> fixedVals[f.key]=f.def);
+    Array.from(presetRow.children).forEach(b=> b.classList.toggle('active', b.dataset.id===id));
+    buildFixedControls();
+    xSlider.min = current.xMin; xSlider.max = current.xMax; xSlider.step = (current.xMax-current.xMin)/200;
+    xSlider.value = current.xDefault;
+    xLabelEl.textContent = current.xLabel;
+    render();
+  }
+
+  function buildFixedControls(){
+    fixedControlsEl.innerHTML = '';
+    current.fixed.forEach(f=>{
+      const wrap = document.createElement('div');
+      wrap.className='ctrl';
+      wrap.innerHTML = '<label>Fixed: '+f.label+' <span class="val" data-k="'+f.key+'">'+fixedVals[f.key]+' '+f.unit+'</span></label>'+
+        '<input type="range" class="v-slider" data-k="'+f.key+'" min="'+f.min+'" max="'+f.max+'" step="'+f.step+'" value="'+fixedVals[f.key]+'">';
+      fixedControlsEl.appendChild(wrap);
+    });
+    fixedControlsEl.querySelectorAll('input').forEach(inp=>{
+      inp.addEventListener('input', ()=>{
+        fixedVals[inp.dataset.k] = +inp.value;
+        fixedControlsEl.querySelector('span[data-k="'+inp.dataset.k+'"]').textContent = (+inp.value).toFixed(1)+' '+current.fixed.find(f=>f.key===inp.dataset.k).unit;
+        render();
+      });
+    });
+  }
+
+  function render(){
+    const W=440,H=320, ML=52,MR=16,MT=16,MB=40;
+    const plotW = W-ML-MR, plotH = H-MT-MB;
+    const xmin=current.xMin, xmax=current.xMax;
+    let ymax = 0;
+    const N=120; const pts=[];
+    for(let i=0;i<=N;i++){
+      const x = xmin + (xmax-xmin)*i/N;
+      const y = current.compute(fixedVals, x);
+      pts.push([x,y]); if(y>ymax) ymax=y;
+    }
+    ymax *= 1.12;
+    function sx(x){ return ML + (x-xmin)/(xmax-xmin)*plotW; }
+    function sy(y){ return MT + plotH - (y/ymax)*plotH; }
+
+    let svgStr = '';
+    // grid
+    for(let i=0;i<=4;i++){
+      const gx = ML + plotW*i/4;
+      const gy = MT + plotH*i/4;
+      svgStr += '<line class="grid-line" x1="'+gx+'" y1="'+MT+'" x2="'+gx+'" y2="'+(MT+plotH)+'"/>';
+      svgStr += '<line class="grid-line" x1="'+ML+'" y1="'+gy+'" x2="'+(ML+plotW)+'" y2="'+gy+'"/>';
+      svgStr += '<text x="'+gx+'" y="'+(MT+plotH+14)+'" text-anchor="middle">'+fmt(xmin+(xmax-xmin)*i/4,0)+'</text>';
+      svgStr += '<text x="'+(ML-8)+'" y="'+(MT+plotH-plotH*i/4+3)+'" text-anchor="end">'+fmt(ymax*i/4,1)+'</text>';
+    }
+    svgStr += '<line class="axis" x1="'+ML+'" y1="'+MT+'" x2="'+ML+'" y2="'+(MT+plotH)+'"/>';
+    svgStr += '<line class="axis" x1="'+ML+'" y1="'+(MT+plotH)+'" x2="'+(ML+plotW)+'" y2="'+(MT+plotH)+'"/>';
+    svgStr += '<text x="'+(ML+plotW/2)+'" y="'+(H-6)+'" text-anchor="middle" style="fill:#9aa1b4;">'+current.xLabel+'</text>';
+    svgStr += '<text x="12" y="'+(MT+8)+'" style="fill:#9aa1b4;">'+current.yLabel+'</text>';
+
+    let path = 'M '+pts.map(([x,y])=> sx(x)+' '+sy(y)).join(' L ');
+    svgStr += '<path class="curve" d="'+path+'"/>';
+
+    const xVal = +xSlider.value;
+    const yVal = current.compute(fixedVals, xVal);
+    svgStr += '<circle class="pt" cx="'+sx(xVal)+'" cy="'+sy(yVal)+'" r="6"/>';
+
+    svg.innerHTML = svgStr;
+
+    xReadout.querySelector('.lbl').textContent = current.xVar;
+    xReadout.querySelector('.num').textContent = fmt(xVal,2);
+    yReadout.querySelector('.lbl').textContent = current.yVar;
+    yReadout.querySelector('.num').textContent = fmt(yVal,2);
+
+    const tagClass = current.relation==='inverse' ? 'inverse':'direct';
+    const tagText = current.relation==='inverse' ? 'Inverse relationship' : 'Direct relationship';
+    relationBox.innerHTML = '<span class="tag '+tagClass+'">'+tagText+'</span><br>'+current.text(fixedVals);
+  }
+
+  xSlider.addEventListener('input', render);
+  selectPreset('pv');
+})();
+
+/* ================= MIXTURES / PARTIAL PRESSURE ================= */
+(function(){
+  const gases = [
+    {key:'A', name:'Gas A', color:'#2dd4bf', n:2.0},
+    {key:'B', name:'Gas B', color:'#a78bfa', n:1.0},
+    {key:'C', name:'Gas C', color:'#fbbf24', n:0.0}
+  ];
+  const vSlider = document.getElementById('mixV'), tSlider = document.getElementById('mixT');
+  const vVal = document.getElementById('mixV_val'), tVal = document.getElementById('mixT_val');
+  const rowsEl = document.getElementById('mixGasRows');
+  const barEl = document.getElementById('mixBar');
+  const identityEl = document.getElementById('mixIdentity');
+  const canvas = document.getElementById('mixCanvas'); const ctx = canvas.getContext('2d');
+
+  gases.forEach(g=>{
+    const row = document.createElement('div');
+    row.className='gas-row';
+    row.innerHTML = '<div class="gas-swatch" style="background:'+g.color+'"></div>'+
+      '<div class="ctrl"><label>'+g.name+', n<sub>'+g.key+'</sub> <span class="val" data-g="'+g.key+'">'+g.n.toFixed(1)+' mol</span></label>'+
+      '<input type="range" data-g="'+g.key+'" min="0" max="4" step="0.1" value="'+g.n+'"></div>';
+    rowsEl.appendChild(row);
+  });
+  rowsEl.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      const g = gases.find(x=>x.key===inp.dataset.g);
+      g.n = +inp.value;
+      rowsEl.querySelector('span[data-g="'+g.key+'"]').textContent = g.n.toFixed(1)+' mol';
+      update();
+    });
+  });
+
+  let particlesViz = [];
+  function rebuildViz(){
+    const V=+vSlider.value, T=+tSlider.value;
+    particlesViz = [];
+    gases.forEach(g=>{
+      const count = Math.round(g.n*12);
+      for(let i=0;i<count;i++){
+        const ang=Math.random()*Math.PI*2;
+        const spd = Math.sqrt(T/298)*1.2*(0.6+Math.random()*0.8);
+        particlesViz.push({x:220+(Math.random()*2-1)*190, y:110+(Math.random()*2-1)*90, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd, r:3, color:g.color});
+      }
+    });
+  }
+
+  function stepViz(){
+    const left=30,right=410,top=20,bottom=200;
+    particlesViz.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x-p.r<left){p.x=left+p.r;p.vx*=-1;} if(p.x+p.r>right){p.x=right-p.r;p.vx*=-1;}
+      if(p.y-p.r<top){p.y=top+p.r;p.vy*=-1;} if(p.y+p.r>bottom){p.y=bottom-p.r;p.vy*=-1;}
+    });
+  }
+  function drawViz(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.strokeStyle='#a78bfa'; ctx.lineWidth=2; ctx.strokeRect(30,20,380,180);
+    particlesViz.forEach(p=>{ ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill(); });
+  }
+
+  function update(){
+    const V=+vSlider.value, T=+tSlider.value;
+    vVal.textContent=V+' L'; tVal.textContent=T+' K';
+    const active = gases.filter(g=>g.n>0);
+    const ntotal = active.reduce((s,g)=>s+g.n,0);
+    barEl.innerHTML='';
+    if(ntotal<=0){ identityEl.innerHTML='Add moles of at least one gas.'; return; }
+    let ptotal = 0;
+    const parts = active.map(g=>{ const p = g.n*R*T/V; ptotal+=p; return {g,p}; });
+    parts.forEach(({g,p})=>{
+      const seg = document.createElement('div');
+      const pct = (p/ptotal*100);
+      seg.className='bar-seg';
+      seg.style.width = pct+'%';
+      seg.style.background = g.color;
+      seg.textContent = pct>10 ? (p.toFixed(2)+' atm') : '';
+      barEl.appendChild(seg);
+    });
+    const lines = parts.map(({g,p})=> g.name+': X='+(g.n/ntotal).toFixed(2)+', P<sub>'+g.key+'</sub>='+p.toFixed(2)+' atm').join(' &nbsp;|&nbsp; ');
+    identityEl.innerHTML = lines + '<br><b>P<sub>total</sub> = '+ptotal.toFixed(2)+' atm</b> (Dalton\'s Law: sum of partial pressures)';
+    rebuildViz();
+  }
+  vSlider.addEventListener('input', update);
+  tSlider.addEventListener('input', update);
+  update();
+  function loop(){ stepViz(); drawViz(); requestAnimationFrame(loop); }
+  loop();
+})();
+
+/* ================= GUIDED LAB ================= */
+(function(){
+  const steps = [
+    { title:'Step 1 · Adding more gas at constant V, T',
+      body:'A rigid 10.0 L container holds gas at 300 K. If you add more moles of gas without changing V or T, what happens to the pressure?',
+      options:['Pressure increases','Pressure decreases','Pressure stays the same','Cannot be determined'],
+      correct:0,
+      explain:'Correct: P = nRT/V. With V and T fixed, P is directly proportional to n. More particles means more frequent collisions with the container walls, so pressure rises in direct proportion to the moles added.'
+    },
+    { title:"Step 2 · Boyle's Law — compressing the container",
+      body:'A gas at 4.0 atm occupies 6.0 L at constant n and T. If the volume is compressed to 2.0 L, what is the new pressure?',
+      options:['1.33 atm','4.0 atm','8.0 atm','12.0 atm'],
+      correct:2,
+      explain:"Correct: Boyle's Law — P₁V₁ = P₂V₂ (n, T constant). (4.0 atm)(6.0 L) = P₂(2.0 L) → P₂ = 12.0 atm. Squeezing the same particles into a smaller space forces more frequent wall collisions, raising pressure."
+    },
+    { title:"Step 3 · Gay-Lussac's Law — heating a sealed container",
+      body:'A sealed rigid container (constant V, n) holds gas at 2.0 atm and 250 K. The container is heated to 500 K. What is the new pressure?',
+      options:['1.0 atm','2.0 atm','4.0 atm','8.0 atm'],
+      correct:2,
+      explain:'Correct: at constant V and n, P/T is constant (Gay-Lussac\'s Law). Doubling the Kelvin temperature doubles the pressure: 2.0 atm × (500/250) = 4.0 atm. Faster-moving particles hit the fixed walls harder and more often.'
+    },
+    { title:"Step 4 · Charles's Law — heating a flexible container",
+      body:'A balloon (constant P, n) holds 3.0 L of gas at 200 K. It is warmed to 400 K. What is the new volume?',
+      options:['1.5 L','3.0 L','6.0 L','12.0 L'],
+      correct:2,
+      explain:"Correct: at constant P and n, V/T is constant (Charles's Law). Doubling T doubles V: 3.0 L × (400/200) = 6.0 L. The balloon must expand to keep the collision rate — and therefore pressure — unchanged as particles speed up."
+    },
+    { title:'Step 5 · Partial pressure and mole fraction',
+      body:'A container holds 3.0 mol N₂ and 1.0 mol O₂ at a total pressure of 4.0 atm. What is the partial pressure of O₂?',
+      options:['1.0 atm','2.0 atm','3.0 atm','4.0 atm'],
+      correct:0,
+      explain:'Correct: mole fraction of O₂ = n(O₂)/n(total) = 1.0/4.0 = 0.25. By Dalton\'s Law, P(O₂) = X(O₂) × P(total) = 0.25 × 4.0 atm = 1.0 atm.'
+    },
+    { title:'Step 6 · Reading a graph',
+      body:'A graph plots Volume (y-axis) against Temperature in Kelvin (x-axis) for a fixed amount of gas at constant pressure. What shape should the graph be, and why?',
+      options:[
+        'A hyperbola curving downward, because V and T are inversely related',
+        'A straight line through the origin, because V and T are directly proportional',
+        'A horizontal line, because V does not depend on T',
+        'An exponential curve, because heating causes runaway expansion'
+      ],
+      correct:1,
+      explain:"Correct: at constant P and n, PV = nRT rearranges to V = (nR/P)·T — a straight line through the origin with slope nR/P. This only works because T is measured in Kelvin, where 0 K genuinely corresponds to zero average kinetic energy."
+    }
+  ];
+  let idx=0, answered=[], score=0;
+
+  const titleEl = document.getElementById('stepTitle');
+  const bodyEl = document.getElementById('stepBody');
+  const dotsEl = document.getElementById('stepDots');
+  const backBtn = document.getElementById('stepBack');
+  const nextBtn = document.getElementById('stepNext');
+  const scoreEl = document.getElementById('stepScore');
+
+  function renderDots(){
+    dotsEl.innerHTML='';
+    steps.forEach((s,i)=>{
+      const d=document.createElement('span');
+      if(answered[i]!==undefined) d.classList.add('done');
+      if(i===idx) d.classList.add('cur');
+      dotsEl.appendChild(d);
+    });
+  }
+
+  function renderStep(){
+    const s = steps[idx];
+    titleEl.textContent = s.title;
+    let html = '<p style="font-size:14px;line-height:1.6;">'+s.body+'</p><div class="predict-opts" id="stepOpts"></div><div id="stepFeedback"></div>';
+    bodyEl.innerHTML = html;
+    const optsEl = document.getElementById('stepOpts');
+    s.options.forEach((opt,i)=>{
+      const b=document.createElement('button');
+      b.className='opt-btn'; b.textContent=opt;
+      if(answered[idx]!==undefined){
+        b.disabled=true;
+        if(i===s.correct) b.classList.add('correct');
+        else if(i===answered[idx]) b.classList.add('incorrect');
+      } else {
+        b.addEventListener('click', ()=> selectAnswer(i));
+      }
+      optsEl.appendChild(b);
+    });
+    if(answered[idx]!==undefined){
+      const fb=document.createElement('div');
+      fb.className='feedback-box '+(answered[idx]===s.correct?'correct':'incorrect');
+      fb.innerHTML = (answered[idx]===s.correct?'<b>Correct.</b> ':'<b>Not quite.</b> ')+s.explain;
+      document.getElementById('stepFeedback').appendChild(fb);
+    }
+    backBtn.disabled = idx===0;
+    nextBtn.textContent = idx===steps.length-1 ? 'Finish' : 'Next →';
+    nextBtn.disabled = answered[idx]===undefined;
+    scoreEl.textContent = 'Score: '+score+' / '+steps.length;
+    renderDots();
+  }
+
+  function selectAnswer(i){
+    if(answered[idx]!==undefined) return;
+    answered[idx]=i;
+    if(i===steps[idx].correct) score++;
+    renderStep();
+  }
+
+  backBtn.addEventListener('click', ()=>{ if(idx>0){ idx--; renderStep(); } });
+  nextBtn.addEventListener('click', ()=>{
+    if(idx<steps.length-1){ idx++; renderStep(); }
+    else {
+      bodyEl.innerHTML = '<div class="score-summary"><div class="big">'+score+' / '+steps.length+'</div><p style="color:var(--muted);margin-top:6px;">Guided lab complete. Review any missed steps using the dots above, or head to the Quiz for a tiered assessment.</p></div>';
+      nextBtn.disabled = true;
+    }
+  });
+  renderStep();
+})();
+
+/* ================= QUIZ ================= */
+(function(){
+  const tiers = [
+    { id:'l1', name:'Level 1 · Foundational', desc:'Recall & recognize', questions:[
+      { q:'In the ideal gas law PV = nRT, what does "n" represent?', opts:['Newtons of force','Number of moles of gas','Number of collisions per second','Normal atmospheric pressure'], correct:1,
+        explain:'"n" is the number of moles of gas present — it counts particles in chemistry-sized units, not force or pressure.' },
+      { q:'At constant n and T, if the volume of a container doubles, what happens to the pressure?', opts:['It doubles','It halves','It stays the same','It quadruples'], correct:1,
+        explain:'P and V are inversely proportional at constant n, T (Boyle\'s Law): P×V = nRT = constant, so doubling V halves P.' },
+      { q:'What shape does a graph of P (y-axis) vs. V (x-axis) form at constant n and T?', opts:['A straight line through the origin','A hyperbola (inverse curve)','A horizontal line','A parabola opening upward'], correct:1,
+        explain:'Since P = nRT/V, P is inversely proportional to V, producing a hyperbola — not a straight line.' },
+      { q:'Why must temperature be expressed in Kelvin, not Celsius, when using PV = nRT?', opts:['Kelvin is a bigger number so it\'s more precise','0 K is absolute zero, making T directly proportional to average kinetic energy — Celsius has no true zero for this','Celsius values are always negative','It is just a historical convention with no physical reason'], correct:1,
+        explain:'Kelvin starts at absolute zero, where particle motion is minimized. Only with this true zero does T stay directly (not just linearly) proportional to kinetic energy and to P or V in the gas law.' },
+      { q:'For a mixture of ideal gases, how is the total pressure related to the individual gases present?', opts:['It equals the pressure of the most abundant gas only','It equals the sum of each gas\'s partial pressure (Dalton\'s Law)','It equals the average of the partial pressures','It cannot be determined without knowing molar mass'], correct:1,
+        explain:"Dalton's Law: P(total) = P(A) + P(B) + P(C) + ... — each gas contributes independently to the total pressure." }
+    ]},
+    { id:'l2', name:'Level 2 · Application', desc:'Calculate & interpret', questions:[
+      { q:'A 2.00 mol sample of gas occupies 10.0 L at 300 K. Using R = 0.0821 L·atm/(mol·K), what is the pressure?', opts:['2.47 atm','4.93 atm','24.6 atm','0.20 atm'], correct:1,
+        explain:'P = nRT/V = (2.00)(0.0821)(300)/10.0 = 4.93 atm.' },
+      { q:'At constant n and V, if pressure triples, what happened to the Kelvin temperature?', opts:['It tripled','It was cut to a third','It stayed the same','It increased by 3 K'], correct:0,
+        explain:'At constant n, V: P ∝ T (Gay-Lussac\'s Law). Tripling P means T must also have tripled.' },
+      { q:'A container holds 3.0 mol N₂ and 1.0 mol O₂ at a total pressure of 4.0 atm. What is the partial pressure of O₂?', opts:['0.25 atm','1.0 atm','2.0 atm','3.0 atm'], correct:1,
+        explain:'Mole fraction of O₂ = 1.0/4.0 = 0.25. P(O₂) = X(O₂) × P(total) = 0.25 × 4.0 atm = 1.0 atm.' },
+      { q:'A gas at 2.0 atm and 5.0 L is compressed to 2.0 L at constant n and T. What is the new pressure?', opts:['0.80 atm','2.0 atm','5.0 atm','10.0 atm'], correct:2,
+        explain:"Boyle's Law: P₁V₁ = P₂V₂ → (2.0)(5.0) = P₂(2.0) → P₂ = 5.0 atm." },
+      { q:'A graph of V (y-axis) vs. T in Kelvin (x-axis) at constant P is a straight line through the origin. What does the slope of that line represent?', opts:['nR/P','P/nR','nRT','1/(nRT)'], correct:0,
+        explain:'Rearranging PV = nRT gives V = (nR/P)·T, a line with slope nR/P and y-intercept 0.' }
+    ]},
+    { id:'l3', name:'Level 3 · Synthesis', desc:'Multi-step reasoning', questions:[
+      { q:'A rigid, sealed container (constant V, n) is heated from 250 K to 500 K. By what factor does the pressure change?', opts:['×0.5','×1','×2','×4'], correct:2,
+        explain:'At constant V, n: P ∝ T. Doubling absolute temperature (250 K → 500 K) doubles the pressure.' },
+      { q:'Flask A contains 1.0 mol He. Flask B (identical volume, same temperature) contains 0.50 mol He + 0.50 mol Ne. How do the total pressures compare?', opts:['Flask A has higher pressure','Flask B has higher pressure','The pressures are equal','Cannot be determined without molar masses'], correct:2,
+        explain:'Ideal gas pressure depends only on total moles, V, and T — not on particle identity. Both flasks have 1.0 mol total gas at the same V and T, so their pressures are equal.' },
+      { q:'A student claims: "If pressure and volume are both held constant, then n and T must be directly proportional." Is this correct?', opts:['Yes, n and T are directly proportional here','No — n and T must be inversely proportional here','No — n and T are unrelated if P and V are fixed','Yes, but only if the gas is monatomic'], correct:1,
+        explain:'PV = nRT. If P and V are both fixed, then nT = PV/R = constant — meaning n and T are INVERSELY proportional, not directly. Increasing T at fixed P, V requires decreasing n.' },
+      { q:'A gas mixture has a total pressure of 6.0 atm. Gas A has a mole fraction of 0.40. What is the partial pressure of gas B (the only other gas present)?', opts:['2.4 atm','3.0 atm','3.6 atm','4.0 atm'], correct:2,
+        explain:'X(B) = 1 − 0.40 = 0.60. P(B) = X(B) × P(total) = 0.60 × 6.0 atm = 3.6 atm. Check: P(A) = 0.40×6.0 = 2.4 atm, and 2.4 + 3.6 = 6.0 atm ✓.' },
+      { q:'At STP-like conditions (T = 273 K, P = 1.00 atm), 1.00 mol of gas occupies 22.4 L. If n is doubled while T and P are held constant, what happens to V?', opts:['V is halved to 11.2 L','V is unchanged at 22.4 L','V doubles to 44.8 L','V cannot be predicted without knowing molar mass'], correct:2,
+        explain:'At constant P and T, V ∝ n. Doubling the moles of gas doubles the volume required to keep pressure and temperature the same: 44.8 L.' }
+    ]}
+  ];
+
+  const tierRow = document.getElementById('tierRow');
+  const tierSelectWrap = document.getElementById('quizTierSelect');
+  const quizArea = document.getElementById('quizArea');
+
+  tiers.forEach(t=>{
+    const b=document.createElement('div');
+    b.className='tier-btn';
+    b.innerHTML = '<div class="t-name">'+t.name+'</div><div class="t-desc">'+t.desc+' · '+t.questions.length+' questions</div>';
+    b.addEventListener('click', ()=> startTier(t));
+    tierRow.appendChild(b);
+  });
+
+  function startTier(tier){
+    tierSelectWrap.style.display='none';
+    quizArea.style.display='';
+    let qi=0, score=0, chosen=undefined;
+    function renderQ(){
+      const q = tier.questions[qi];
+      let html = '<div class="qcounter">'+tier.name+' — Question '+(qi+1)+' of '+tier.questions.length+' &nbsp;|&nbsp; Score: '+score+'</div>';
+      html += '<div class="qtext">'+q.q+'</div><div class="predict-opts" id="quizOpts"></div><div id="quizFeedback"></div>';
+      html += '<div class="step-nav" style="margin-top:14px;"><button class="navbtn" id="quizExit">← Choose tier</button><button class="navbtn primary" id="quizNext" disabled>'+(qi===tier.questions.length-1?'Finish':'Next →')+'</button></div>';
+      quizArea.innerHTML = html;
+      const optsEl = document.getElementById('quizOpts');
+      q.opts.forEach((opt,i)=>{
+        const b=document.createElement('button');
+        b.className='opt-btn'; b.textContent=opt;
+        b.addEventListener('click', ()=>{
+          if(chosen!==undefined) return;
+          chosen=i;
+          if(i===q.correct) score++;
+          Array.from(optsEl.children).forEach((c,ci)=>{
+            c.disabled=true;
+            if(ci===q.correct) c.classList.add('correct');
+            else if(ci===i) c.classList.add('incorrect');
+          });
+          const fb=document.createElement('div');
+          fb.className='feedback-box '+(i===q.correct?'correct':'incorrect');
+          fb.innerHTML=(i===q.correct?'<b>Correct.</b> ':'<b>Not quite.</b> ')+q.explain;
+          document.getElementById('quizFeedback').appendChild(fb);
+          document.getElementById('quizNext').disabled=false;
+          document.getElementById('quizNext').addEventListener('click', ()=>{
+            if(qi<tier.questions.length-1){ qi++; chosen=undefined; renderQ(); }
+            else finish();
+          }, {once:true});
+        });
+        optsEl.appendChild(b);
+      });
+      document.getElementById('quizExit').addEventListener('click', ()=>{
+        tierSelectWrap.style.display=''; quizArea.style.display='none';
+      });
+    }
+    function finish(){
+      const pct = Math.round(score/tier.questions.length*100);
+      quizArea.innerHTML = '<div class="score-summary"><div class="big">'+score+' / '+tier.questions.length+'</div>'+
+        '<p style="color:var(--muted);margin-top:6px;">'+pct+'% correct on '+tier.name+'</p>'+
+        '<div class="step-nav" style="justify-content:center;gap:12px;margin-top:18px;"><button class="navbtn" id="quizBack1">← Choose a different tier</button><button class="navbtn primary" id="quizRetry">Retry this tier</button></div></div>';
+      document.getElementById('quizBack1').addEventListener('click', ()=>{ tierSelectWrap.style.display=''; quizArea.style.display='none'; });
+      document.getElementById('quizRetry').addEventListener('click', ()=> startTier(tier));
+    }
+    renderQ();
+  }
+})();
+
+})();
+</script>
+</body>
+</html>
